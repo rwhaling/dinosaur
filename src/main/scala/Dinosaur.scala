@@ -37,11 +37,18 @@ case class Router(handlers:Seq[Handler]) {
   }
 
 
-  def dispatch(request:Request):Response = {
+  def dispatch():Response = {
+    val request = Router.parseRequest()
     val matches = for ( h @ Handler(pattern, handler) <- this.handlers
                         if request.pathInfo.startsWith(pattern)) yield h
     val bestHandler = matches.maxBy( _.pattern.size )
-    bestHandler.handler(request)
+    val response = bestHandler.handler(request)
+    for ( (k,v) <- response.headers) {
+      System.out.println(s"${k}: ${v}")
+    }
+    System.out.println()
+    System.out.println(response.body)
+    return response
   }
 }
 
