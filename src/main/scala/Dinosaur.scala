@@ -31,7 +31,7 @@ case class Router(handlers:Seq[Handler]) {
     val bestHandler = matches.maxBy( _.pattern.size )
     val response = bestHandler.handler(request)
     for ( (k,v) <- response.inferHeaders ) {
-      System.out.println("%s: %s".format(k,v))
+      System.out.println(k + ": " + v)
     }
     System.out.println()
     System.out.println(response.bodyToString)

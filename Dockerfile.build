@@ -1,6 +1,8 @@
-FROM rwhaling/scala-native-alpine:0.1.0
+FROM rwhaling/scala-native-alpine:0.1.0-sbt
 RUN mkdir -p /dinosaur-build /output /output/usr/lib
 ADD . /dinosaur-build
 WORKDIR /dinosaur-build
 CMD ["sbt nativeLink && \
-      cp target/scala-2.11/*-out /output/dinosaur-build-out "]
+      mkdir -p /output/usr/lib && \
+      cp -v /build/usr/lib/* /output/usr/lib/ && \
+      cp -v target/scala-2.11/*-out /output/dinosaur-build-out "]

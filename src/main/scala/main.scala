@@ -12,14 +12,14 @@ object main {
             request.pathInfo match {
               case Seq("who") => "Who's there?"
               case Seq("who",x) => "Hello, " + x
-              case Seq("who",x,y) => "Hello, %s and %s".format(x,y)
+              case Seq("who",x,y) => "Hello both of you"
               case _ => "Hello y'all!"
             }
           )
           .get("/bye")( request =>
             request.params.getOrElse("who",Seq.empty)
-                   .map { x => "Bye, %s".format(x)}
-                   .mkString(" ")
+                   .map { x => "Bye, " + x }
+                   .mkString(". ")
           )
           .dispatch()
   }
