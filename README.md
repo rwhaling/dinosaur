@@ -8,14 +8,14 @@ But that's not all -- Dinosaur provides a Dockerfile for reproducible, container
 
 ## example code
 ```scala
-package io.dinosaur
+package io.dinosaur.main
 import io.dinosaur._
+
 object main {
   def main(args: Array[String]): Unit = {
-    val request = Router.parseRequest()
-    val router = Router.setup()
-                       .handle("/hello",200, _ => "Hello, world!")
-    val response = router.dispatch(request)
+    Router.init()
+          .get("/") { "<h1>Hello World!</h1>" }
+          .dispatch()
   }
 }
 ```
@@ -33,17 +33,17 @@ Scala Native produces tiny binaries, but the SBT build toolchain is unfortunatel
 I develop on OS X Yosemite, which can only link Scala Native intermittently due to clang issues.  Fortunately, it compiles just fine, which greatly speeds up development cycles.  When I want to run
 it, I first do this:
 ```sh
-$> docker build -f Dockerfile -t dinosaur .
+> docker build -f Dockerfile -t dinosaur .
 ```
 which compiles and links the Scala Native binary, and deposits it in the `cgi-bin` dir of the apache server.  Then, I just:
 ```sh
-$> docker run -d -p 8080:80 dinosaur
+> docker run -d -p 8080:80 dinosaur
 ```
 
 Which starts serving the app from the root URL: `http://DOCKER_HOST:8080/cgi-bin/dinosaur`, and then we can access via browser or CLI like so:
 
 ```sh
-$> http get localhost:8080/hello
+> http get localhost:8080/hello
 HTTP/1.1 200 OK
 Connection: Keep-Alive
 Content-Length: 15
@@ -64,8 +64,9 @@ Hello, world!
  * Refined API, study existing Go and Rust models
  * Integrate with other web servers
  * Stress-testing and tuning uWSGI
+ * Tests
 
 ## project status
-No, seriously, this isn't an elaborate troll. I did this because I love old-school UNIX systems coding, and I did this because I love Scala and am super-stoked about Scala Native.  I've also been thinking a lot about "vanilla" Scala style, and ergonomics for an approachable web micro-framework, all of which inform the design of this project.
+No, seriously, this isn't an elaborate joke. I did this because I love old-school UNIX systems coding, and I did this because I love Scala and am super-stoked about Scala Native.  I've also been thinking a lot about what constitutes "vanilla" Scala style, and about ergonomics for an approachable web micro-framework, all of which inform the design of this project.
 
 That said, Scala Native is a *very* young project, and this is really purely speculative, research-quality, pre-release code for now. That said, I'd welcome outside contributions, issues, questions or comments.

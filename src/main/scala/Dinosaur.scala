@@ -2,52 +2,39 @@ package io.dinosaur
 import scalanative.native._
 import io.dinosaur.CgiUtils._
 
-case class Request(
-  env:Map[String, String],
-  scriptName:String,
-  pathInfo:Seq[String],
-  queryParameters:Map[String, Seq[String]]
-)
-
-case class Response(
-  statusCode: Int,
-  body: String,
-  headers: Map[String, String] = Map("Content-type" -> "text/html; charset=utf-8")
-)
-
 case class Handler(
+  method : Method,
   pattern: Seq[String],
   handler: Request => Response
 ) {
-  def this(pattern:String, handler: Request => Response) = {
-    this(CgiUtils.parsePathInfo(pattern),handler)
+  def this(method: Method, pattern:String, handler: Request => Response) = {
+    this(method, CgiUtils.parsePathInfo(pattern),handler)
   }
 }
 
 case class Router(handlers:Seq[Handler]) {
-  def handle(path:String, f: Request => Response):Router = {
-    val new_handler = Handler(CgiUtils.parsePathInfo(path), f)
+  def handle(method: Method, path:String)(f: Request => Response):Router = {
+    val new_handler = Handler(method, CgiUtils.parsePathInfo(path), f)
     return Router(Seq(new_handler) ++ this.handlers)
   }
 
-  def handle(path:String, statusCode: Int, f: Request => String):Router = {
-    val decorated = { r:Request => Response(statusCode,f(r)) }
-    val new_handler = Handler(CgiUtils.parsePathInfo(path), decorated)
-    return Router(Seq(new_handler) ++ this.handlers)
-  }
-
+  def get(path:String)(f: Request => Response):Router = handle(GET, path)(f)
+  def post(path:String)(f: Request => Response):Router = handle(POST, path)(f)
+  def put(path:String)(f: Request => Response):Router = handle(PUT, path)(f)
+  def delete(path:String)(f: Request => Response):Router = handle(DELETE, path)(f)
 
   def dispatch():Response = {
     val request = Router.parseRequest()
-    val matches = for ( h @ Handler(pattern, handler) <- this.handlers
+    val matches = for ( h @ Handler(method, pattern, handler) <- this.handlers
+                        if request.method == method
                         if request.pathInfo.startsWith(pattern)) yield h
     val bestHandler = matches.maxBy( _.pattern.size )
     val response = bestHandler.handler(request)
-    for ( (k,v) <- response.headers) {
-      System.out.println(s"${k}: ${v}")
+    for ( (k,v) <- response.inferHeaders ) {
+      System.out.println("%s: %s".format(k,v))
     }
     System.out.println()
-    System.out.println(response.body)
+    System.out.println(response.bodyToString)
     return response
   }
 }
@@ -57,17 +44,27 @@ object Router {
     val scriptName = env("SCRIPT_NAME")
     val pathInfo = parsePathInfo(env("PATH_INFO"))
     val queryString = parseQueryString(env("QUERY_STRING"))
+    val method = env("METHOD") match {
+      case "GET"    => GET
+      case "POST"   => POST
+      case "PUT"    => PUT
+      case "DELETE" => DELETE
+      case "HEAD"   => HEAD
+      case "OPTIONS"=> OPTIONS
+      case "PATCH"  => PATCH
+      case _        => GET
+    }
     val environ:Map[String,String] = Map()
-    val request = Request(environ, scriptName, pathInfo, queryString)
+    val request = Request(method, pathInfo, queryString)
     request
   }
 
-  def setup():Router = {
-    val errorResponse = Response(404, "No path matched the request")
-    val errorHandler = Handler(List(), (_) => errorResponse)
+  def init():Router = {
+    val errorResponse = Response(StringBody("No path matched the request"))
+    val errorHandler = Handler(GET,List(), (_) => errorResponse)
 
-    val debugHandler = Handler(List("debug"), (request) => {
-      Response(200, request.toString)
+    val debugHandler = Handler(GET,List("debug"), (request) => {
+      Response(StringBody(request.toString))
     })
 
     val handlers:Seq[Handler] = List(debugHandler, errorHandler)
