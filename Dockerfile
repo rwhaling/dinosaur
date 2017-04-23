@@ -1,25 +1,14 @@
-FROM wgmouton/sbt-ubuntu:latest
-RUN apt-get update
-ENV APACHE_RUN_USER www-data \
-    APACHE_RUN_GROUP www-data \
-    APACHE_PID_FILE /var/run/apache2/apache2.pid \
-    APACHE_RUN_DIR /var/run/apache2 \
-    APACHE_LOCK_DIR /var/lock/apache2 \
-    APACHE_LOG_DIR /var/log/apache2
-RUN apt-get -y install ssl-cert apache2 apache2-utils && \
-    cp /etc/apache2/mods-available/cgi.load /etc/apache2/mods-enabled/cgi.load
+FROM rwhaling/scala-native-alpine:0.1.0-sbt
+RUN apk --update add uwsgi-cgi
 
-RUN apt-get install -y clang \
-                       libgc-dev \
-                       libunwind-dev \
-                       libre2-dev
-RUN mkdir /scala-native
-WORKDIR /scala-native
-ADD ./project/build.properties /scala-native/project/build.properties
-ADD ./project/plugins.sbt /scala-native/project/plugins.sbt
-ADD ./build.sbt /scala-native/build.sbt
-RUN sbt clean
-RUN mkdir /output
-ADD . /scala-native
-RUN sbt clean nativeLink && cp target/scala-2.11/scala-native-out /usr/lib/cgi-bin/dinosaur
-CMD ["bash", "-c", "apachectl -e info -DFOREGROUND"]
+RUN mkdir -p /dinosaur-build /output /output/usr/lib /usr/lib/cgi-bin
+ADD . /dinosaur-build
+WORKDIR /dinosaur-build
+
+RUN sbt clean nativeLink && \
+    mv /dinosaur-build/target/scala-2.11/dinosaur-build-out /usr/lib/cgi-bin/dinosaur-build-out
+
+ADD cgi.ini /usr/lib/cgi-bin/cgi.ini
+WORKDIR /usr/lib/cgi-bin
+
+CMD ["uwsgi --ini cgi.ini"]

@@ -1,8 +1,10 @@
 # dinosaur
-CGI-based web "framework" for Scala Native with the power of [Apache httpd](https://httpd.apache.org/).  
+Web "framework" for Scala Native with the power of [RFC 3875: The Common Gateway Interface](https://tools.ietf.org/html/rfc3875).  
 
-# what does it do?
-Scala Native is the future, and a stunning achievement, but at the moment it only supports a small subset of the Java and C standard libraries, and it's especially light on the socket and networking front.  Dinosaur utilizes cutting-edge 1993 technology to allow it to serve up response to HTTP requests via the the Common Gateway Interface.
+## what does it do?
+The CGI protocol is awesomely trivial: no threads, no network, no sockets, just STDIN, STDOUT, and environment variables. Dinosaur provides basic utilities for working with these primitives, but it also provides a straightforward Router API that should be familiar to anyone who's worked with Node, Flask, Sinatra, or the like.
+
+But that's not all -- Dinosaur provides a Dockerfile for reproducible, containerized builds of your Scala Native app, as well as a built-in uWSGI web server.
 
 ## example code
 ```scala
@@ -17,20 +19,19 @@ object main {
   }
 }
 ```
-Seriously.  That's it.
 
-# no seriously what's going on
-In a prehistoric time, before Rails and Java made enormous application server processes omnipresent , web programming used to be much simpler, and often more efficient.
+## how do i get it?
 
-How simple?  A CGI application receives all system and query parameters via the OS environment, plus an optional request body on STDIN -- it's then responsible for producing a legible HTTP response, including headers, on it's STDOUT stream. Processes are short-lived, share no state, and serve exactly one response before terminating.  This worked because Apache could load the interpreter for a language like Perl, (typically under 100kb), the actual handler script, and any dependencies in less than 20 ms -- 10 ms was more common.  
 
-But as our languages and libraries improved, startup times and per-process memory usage increased multiplicatively. Forking a fresh process to serve each HTTP request was no longer practical.  Modern systems languages like Rust, Go, D, and Scala Native change these assumptions, however.  We can make self-contained packages, under 5 MB, that load and execute in 30ms with minimal overhead.  For other examples of this approach, see: golang's [net/http/cgi](https://golang.org/pkg/net/http/cgi/) and rust's [rust-scgi](https://github.com/ArtemGr/rust-scgi).
 
-Best of all, the CGI API can be entirely and fluently expressed within the constraints of Scala Native's library support.  It reads files, it writes files, it does some light string manipulation, it looks up environment variables.  That's it.
+## building and running
 
-# building and running
+Scala Native produces tiny binaries, but the SBT build toolchain is unfortunately quite large.  To address this, Dinosaur includes 2 separate Dockerfiles for build and runtime, with helper shell scripts. So although the build image is around 400 MB, the runtime is typically well under 20 MB, including the uWSGI server.
 
-I develop on OS X Yosemite, which can only link Scala Native intermittently due to clang issues.  Fortunately, it compiles just fine, which greatly speeds up development cycles.  When I want to run it, I first do this:
+{REVISE}
+
+I develop on OS X Yosemite, which can only link Scala Native intermittently due to clang issues.  Fortunately, it compiles just fine, which greatly speeds up development cycles.  When I want to run
+it, I first do this:
 ```sh
 $> docker build -f Dockerfile -t dinosaur .
 ```
@@ -38,10 +39,11 @@ which compiles and links the Scala Native binary, and deposits it in the `cgi-bi
 ```sh
 $> docker run -d -p 8080:80 dinosaur
 ```
+
 Which starts serving the app from the root URL: `http://DOCKER_HOST:8080/cgi-bin/dinosaur`, and then we can access via browser or CLI like so:
 
 ```sh
-$> http get 127.0.0.1:8080/cgi-bin/dinosaur/hello
+$> http get localhost:8080/hello
 HTTP/1.1 200 OK
 Connection: Keep-Alive
 Content-Length: 15
@@ -53,17 +55,17 @@ Server: Apache/2.4.18 (Ubuntu)
 Hello, world!
 ```
 
-And that's all there is to it.
-
-# TODO
- * Streamline these docker images.  I'd like to get it all ported to NixOS, and have separate images for build and runtime with a shared base.
+## TODO
+ * Publish libraries to Bintray
+ * g8 template for `sbt new dinosaur`
+ * Static library linking would streamline and simplify the build process
  * JSON Parsing
  * HTTP Templating
  * Refined API, study existing Go and Rust models
- * Better model for distribution and inclusion as a library
- * Integrate with other web servers, esp. Nginx
+ * Integrate with other web servers
+ * Stress-testing and tuning uWSGI
 
-# project status
-No, seriously, this isn't an elaborate troll or rickroll. I love and miss old-school UNIX systems coding, and I did this because I love Scala and have been thinking a lot about ergonomics for an approachable web micro-framework, almost like Flask for Scala.  
+## project status
+No, seriously, this isn't an elaborate troll. I did this because I love old-school UNIX systems coding, and I did this because I love Scala and am super-stoked about Scala Native.  I've also been thinking a lot about "vanilla" Scala style, and ergonomics for an approachable web micro-framework, all of which inform the design of this project.
 
-That said, Scala Native is a very young project, and this is really purely speculative, research-quality, pre-release code for now. That said, I'd welcome outside contributions, issues, questions or comments.
+That said, Scala Native is a *very* young project, and this is really purely speculative, research-quality, pre-release code for now. That said, I'd welcome outside contributions, issues, questions or comments.

@@ -1,0 +1,13 @@
+FROM rwhaling/scala-native-alpine:0.1.0-runtime
+RUN apk --update add uwsgi-cgi
+
+# Add in pre-compiled libs
+ADD output/usr/lib/* /usr/lib/
+
+# Add the pre-compiled application
+ADD output/dinosaur-build-out /usr/lib/cgi-bin/dinosaur-build-out
+
+# Add the config file for uWSGI
+ADD cgi.ini /usr/lib/cgi-bin/cgi.ini
+WORKDIR /usr/lib/cgi-bin/
+CMD uwsgi --ini cgi.ini
