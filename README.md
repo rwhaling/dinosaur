@@ -21,50 +21,43 @@ object main {
 ```
 
 ## how do i get it?
-
-
-
-## building and running
-
-Scala Native produces tiny binaries, but the SBT build toolchain is unfortunately quite large.  To address this, Dinosaur includes 2 separate Dockerfiles for build and runtime, with helper shell scripts. So although the build image is around 400 MB, the runtime is typically well under 20 MB, including the uWSGI server.
-
-{REVISE}
-
-I develop on OS X Yosemite, which can only link Scala Native intermittently due to clang issues.  Fortunately, it compiles just fine, which greatly speeds up development cycles.  When I want to run
-it, I first do this:
+There is a giter8 template set up for dinosaur at [rwhaling/dinosaur.g8](https://github.com/rwhaling/dinosaur.g8).  You will need: *recent* SBT (0.13.13 or greater) and Docker.  Once you have that:
 ```sh
-> docker build -f Dockerfile -t dinosaur .
-```
-which compiles and links the Scala Native binary, and deposits it in the `cgi-bin` dir of the apache server.  Then, I just:
-```sh
-> docker run -d -p 8080:80 dinosaur
+mkdir dinosaur-project
+cd dinosaur-project
+sbt new rwhaling/dinosaur.g8
+docker build -t dinosaur-project .
+docker run -d -p 8080:8080 dinosaur-project
 ```
 
-Which starts serving the app from the root URL: `http://DOCKER_HOST:8080/cgi-bin/dinosaur`, and then we can access via browser or CLI like so:
+If your SBT is older, it will tell you that it can't find the SBT new command.  I had to `brew update sbt` on my Mac to get a modern one, even though I've been building new-ish projects.
+
+Once you have the container running, browse to `http://<YOUR_DOCKER_HOST>:8080/` to verify that it works.  From there, you can edit [src/main/scala/main.scala](src/main/scala/main.scala), and repeat the docker build / docker run procedure to test your work.  You can also run SBT compile outside of Docker to type-check your code.  
+
+It's absolutely possible to build and test directly on a recent Mac as well, which I will document as soon as I upgrade.
+
+## lean containers
+Since the general Dockerfile is all-inclusive, it produces large-ish containers -- generally around 600 MB -- even though our executable is around 3-4 MB.  We can trim the fat by using one container for the build, with a volume mount for the output binary, and then use that to build a lean < 20 MB container.  It's not the default, because it's an extra step, but I'm kind of obsessive about this stuff.  Anyhow, if you want to do it:
 
 ```sh
-> http get localhost:8080/hello
-HTTP/1.1 200 OK
-Connection: Keep-Alive
-Content-Length: 15
-Content-Type: text/plain;charset=utf-8
-Date: Fri, 21 Apr 2017 18:36:36 GMT
-Keep-Alive: timeout=5, max=100
-Server: Apache/2.4.18 (Ubuntu)
+docker build -f Dockerfile.build -t dinosaur-build .
+docker -v $(pwd)/output:/output dinosaur-build
 
-Hello, world!
+docker build -f Dockerfile.runtime -t tiny-dinosaur .
+docker run -d -p 8080:8080 tiny-dinosaur
 ```
 
 ## TODO
  * Publish libraries to Bintray
- * g8 template for `sbt new dinosaur`
+ * Use Bintray library from G8 template
+ * More examples
  * Static library linking would streamline and simplify the build process
  * JSON Parsing
  * HTTP Templating
  * Refined API, study existing Go and Rust models
  * Integrate with other web servers
  * Stress-testing and tuning uWSGI
- * Tests
+ * More tests
 
 ## project status
 No, seriously, this isn't an elaborate joke. I did this because I love old-school UNIX systems coding, and I did this because I love Scala and am super-stoked about Scala Native.  I've also been thinking a lot about what constitutes "vanilla" Scala style, and about ergonomics for an approachable web micro-framework, all of which inform the design of this project.

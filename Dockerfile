@@ -6,7 +6,7 @@ ADD . /dinosaur-build
 WORKDIR /dinosaur-build
 
 RUN sbt clean nativeLink && \
-    mv /dinosaur-build/target/scala-2.11/dinosaur-build-out /usr/lib/cgi-bin/dinosaur-build-out
+    mv /dinosaur-build/target/scala-2.11/*-out /usr/lib/cgi-bin/dinosaur-build-out
 
 ADD cgi.ini /usr/lib/cgi-bin/cgi.ini
 WORKDIR /usr/lib/cgi-bin
