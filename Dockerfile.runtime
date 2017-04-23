@@ -8,4 +8,5 @@ ADD output/dinosaur-build-out /usr/lib/cgi-bin/dinosaur-build-out
 # Add the config file for uWSGI
 ADD cgi.ini /usr/lib/cgi-bin/cgi.ini
 WORKDIR /usr/lib/cgi-bin/
-CMD uwsgi --ini cgi.ini
+ENTRYPOINT ["sh", "-c"]
+CMD ["uwsgi --ini cgi.ini"]

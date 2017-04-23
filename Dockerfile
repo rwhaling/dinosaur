@@ -10,5 +10,5 @@ RUN sbt clean nativeLink && \
 
 ADD cgi.ini /usr/lib/cgi-bin/cgi.ini
 WORKDIR /usr/lib/cgi-bin
-
+ENTRYPOINT ["sh", "-c"]
 CMD ["uwsgi --ini cgi.ini"]
