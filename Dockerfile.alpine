@@ -1,0 +1,20 @@
+FROM frolvlad/alpine-glibc:latest
+RUN apk --update add openjdk8-jre
+ENV SBT_VERSION 0.13.13
+ENV SBT_HOME /usr/local/sbt
+ENV PATH ${PATH}:${SBT_HOME}/bin
+
+RUN apk add bash
+RUN apk add git
+
+RUN apk --no-cache --update add ca-certificates openssl bash wget && mkdir -p "$SBT_HOME" && \
+    wget -q -O /etc/apk/keys/sgerrand.rsa.pub https://raw.githubusercontent.com/sgerrand/alpine-pkg-glibc/master/sgerrand.rsa.pub && \
+    wget -q https://github.com/sgerrand/alpine-pkg-glibc/releases/download/2.25-r0/glibc-2.25-r0.apk && apk add glibc-2.25-r0.apk && \
+    wget -qO - --no-check-certificate "https://dl.bintray.com/sbt/native-packages/sbt/$SBT_VERSION/sbt-$SBT_VERSION.tgz" | tar xz -C $SBT_HOME --strip-components=1 && \
+    sbt && exit && \
+    echo -ne "- with sbt $SBT_VERSION\n"
+
+ENTRYPOINT bash
+
+RUN mkdir /app
+ADD . /app

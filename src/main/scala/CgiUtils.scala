@@ -3,11 +3,13 @@ import scalanative.native._
 
 object CgiUtils {
   def env(key: String): String = {
-    val lookup = stdlib.getenv(toCString(key))
-    if (lookup == null) {
-      ""
-    } else {
-      fromCString(lookup)
+    Zone { implicit z =>
+      val lookup = stdlib.getenv(toCString(key))
+      if (lookup == null) {
+        ""
+      } else {
+        fromCString(lookup)
+      }
     }
   }
 
