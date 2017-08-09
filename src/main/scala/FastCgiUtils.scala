@@ -33,7 +33,10 @@ object FastCGIUtils {
       case 10 => FCGI_GET_VALUES_RESULT
       case _ => FCGI_UNKNOWN_TYPE
     }
-    val req_id = (input(2 + offset) & 0xFF) << 8 + (input(3 + offset) & 0xFF)
+    val req_id_b1 = (input(2 + offset) & 0xFF)
+    val req_id_b0 = (input(3 + offset) & 0xFF)
+    val req_id = (req_id_b1 << 8) + (req_id_b0 & 0xFF)
+    // System.err.println("req_id_b1: $req_id_b1  -- req_id_b0: $req_id_b0  -- req_id: $req_id")
     // println(s"length bytes: ${input(4 + offset) & 0xFF} ${input(5 + offset) & 0xFF}")
     val length = ((input(4 + offset) & 0xFF) << 8) + (input(5 + offset) & 0xFF)
     val padding = input(6 + offset) & 0xFF
@@ -78,12 +81,12 @@ object FastCGIUtils {
       val value = value_array.cast[CString]
 
       offset += value_length
-      Zone { implicit z =>
-        val n = fromCString(name)
-        val v = fromCString(value)
-        System.err.println(s"$name_length $value_length :: $n : $v @ $offset")
-        results = results :+ (n,v)
-      }
+      // Zone { implicit z =>
+      //   val n = fromCString(name)
+      //   val v = fromCString(value)
+      //   // System.err.println(s"$name_length $value_length :: $n : $v @ $offset")
+      //   results = results :+ (n,v)
+      // }
     }
     return results
   }
