@@ -3,7 +3,11 @@ import io.dinosaur._
 
 object main {
   def main(args: Array[String]): Unit = {
-    Router.init(FCGIMode)
+    val mode = CgiUtils.env("ROUTER_MODE") match {
+      case "FCGI" => FCGIMode
+      case _      => CGIMode
+    }
+    Router.init(mode)
           .get("/")("<H1>Welcome to Dinosaur!</H1>")
           .get("/hello") { request =>
             "Hello World!"

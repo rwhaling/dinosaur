@@ -57,10 +57,9 @@ COPY --from=build \
 COPY httpd.conf /etc/apache2/httpd.conf
 COPY mpm.conf /etc/apache2/mpm.conf
 
-RUN apk --update add nginx netcat-openbsd bash socat
+RUN apk --update add nginx socat
 COPY nginx.conf /etc/nginx/nginx.conf
 
 ADD nginx.entrypoint.sh /
 
-ENTRYPOINT "bash"
-CMD ["./nginx.entrypoint.sh"]
+ENTRYPOINT ["./nginx.entrypoint.sh"]

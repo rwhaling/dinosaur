@@ -60,6 +60,6 @@ COPY mpm.conf /etc/apache2/mpm.conf
 RUN apk --update add apache2 apache2-utils
 
 RUN mkdir -p /run/apache2
+ADD apache.entrypoint.sh /root/
 
-ENTRYPOINT "sh"
-CMD ["-c", "apachectl -DFOREGROUND"]
+ENTRYPOINT "/root/apache.entrypoint.sh"

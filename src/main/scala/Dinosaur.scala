@@ -52,27 +52,22 @@ case class FastCGIRouter(handlers:Seq[Handler]) extends Router {
       if (content_read < (header.length + header.padding)) {
         System.err.println(s"Warning: read $content_read bytes for record content, expected ${header.length + header.padding}")
       }
-
       // System.err.println(s"request ${header.reqId}: read $header_read bytes header type ${header.rec_type} and $content_read body from stdin")
-      // readAllHeaders(buffer,size_read)
       if ((header.rec_type == FCGI_STDIN) && (header.length == 0) ) {
         // System.err.println(s"sending response to request ${header.reqId} : ${req_count} total processed")
+
+        // total hack work for now.
+        // will fill in implementation once architecture is stabilized
         writeResponse(header.reqId, "Content-type: text/html\r\n\r\nhello")
-        // open_reqs -= header.reqId
         req_count += 1
-        if (req_count >= 1000) {
+        if (req_count >= 1000) { // TODO: parameterize
           System.err.println("done")
           stdio.fclose(stdio.stdout)
           stdio.fclose(stdio.stdin)
           System.err.println("closing out pipe, exiting")
           System.exit(0)
         }
-
-        // if (open_reqs.size > 0) {
-        //   System.err.println(s"Warning: ${open_reqs.size} open requests: $open_reqs")
-        // }
       }
-
     }
   }
 }

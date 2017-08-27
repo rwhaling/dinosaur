@@ -1,5 +1,6 @@
 package io.dinosaur
 import scalanative.native._
+import scalanative.posix.unistd
 
 sealed trait RequestType
 case object FCGI_BEGIN_REQUEST extends RequestType
