@@ -1,5 +1,6 @@
 package io.dinosaur
 import scala.language.implicitConversions
+import scalanative.native._
 
 package object dinosaur {}
 
@@ -17,7 +18,7 @@ case class Request(
   method: Method,
   pathInfo: Seq[String],
   params: Map[String, Seq[String]],
-  env: String => String = CgiUtils.env
+  env: CString => String = CgiUtils.env
 )
 
 case class Response(

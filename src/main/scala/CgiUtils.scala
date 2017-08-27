@@ -2,14 +2,12 @@ package io.dinosaur
 import scalanative.native._
 
 object CgiUtils {
-  def env(key: String): String = {
-    Zone { implicit z =>
-      val lookup = stdlib.getenv(toCString(key))
-      if (lookup == null) {
-        ""
-      } else {
-        fromCString(lookup)
-      }
+  def env(key: CString): String = {
+    val lookup = stdlib.getenv(key)
+    if (lookup == null) {
+      ""
+    } else {
+      fromCString(lookup)
     }
   }
 

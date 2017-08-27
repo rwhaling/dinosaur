@@ -95,10 +95,10 @@ case class CGIRouter(handlers:Seq[Handler]) extends Router {
 
 object Router {
   def parseRequest():Request = {
-    val scriptName = env("SCRIPT_NAME")
-    val pathInfo = parsePathInfo(env("PATH_INFO"))
-    val queryString = parseQueryString(env("QUERY_STRING"))
-    val method = env("METHOD") match {
+    val scriptName = env(c"SCRIPT_NAME")
+    val pathInfo = parsePathInfo(env(c"PATH_INFO"))
+    val queryString = parseQueryString(env(c"QUERY_STRING"))
+    val method = env(c"METHOD") match {
       case "GET"    => GET
       case "POST"   => POST
       case "PUT"    => PUT
@@ -108,7 +108,6 @@ object Router {
       case "PATCH"  => PATCH
       case _        => GET
     }
-    val environ:Map[String,String] = Map()
     val request = Request(method, pathInfo, queryString)
     request
   }
