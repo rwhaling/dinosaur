@@ -4,11 +4,7 @@ import scalanative.native._
 
 object main {
   def main(args: Array[String]): Unit = {
-    val mode = CgiUtils.env(c"ROUTER_MODE") match {
-      case "FCGI" => FCGIMode
-      case _      => CGIMode
-    }
-    Router.init(mode)
+    Router.init()
           .get("/")("<H1>Welcome to Dinosaur!</H1>")
           .get("/hello") { request =>
             "Hello World!"

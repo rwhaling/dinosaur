@@ -112,13 +112,18 @@ object Router {
     request
   }
 
-  def init(mode:RouterMode = CGIMode):Router = {
+  def init():Router = {
     val errorResponse = Response(StringBody("No path matched the request"))
     val errorHandler = Handler(GET,List(), (_) => errorResponse)
 
     val debugHandler = Handler(GET,List("debug"), (request) => {
       Response(StringBody(request.toString))
     })
+
+    val mode = CgiUtils.env(c"ROUTER_MODE") match {
+      case "FCGI" => FCGIMode
+      case _      => CGIMode
+    }
 
     val handlers:Seq[Handler] = List(debugHandler, errorHandler)
     mode match {

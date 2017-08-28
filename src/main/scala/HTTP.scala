@@ -17,8 +17,7 @@ case object PATCH extends Method
 case class Request(
   method: Method,
   pathInfo: Seq[String],
-  params: Map[String, Seq[String]],
-  env: CString => String = CgiUtils.env
+  params: Map[String, Seq[String]]
 )
 
 case class Response(
