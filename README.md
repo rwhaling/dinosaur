@@ -22,8 +22,15 @@ object main {
 ```
 
 ## how do i get it?
-I'm still working on distributing Dinosaur as a Bintray package. Since that's not stable yet, I would recommend cloning this project and editing main.scala for now.(
-  
+I'm still working on distributing Dinosaur as a Bintray package. Since that's not stable yet, I would recommend cloning this project and editing main.scala for now.(https://github.com/rwhaling/dinosaur-example-project).  
+
+You will need Git and Docker.  Once you have that:
+```sh
+docker build -t dinosaur .
+docker run -d -p 80:80 dinosaur
+<app is mounted at http://localhost:80/cgi-bin/app>
+```
+
 Setting up Scala Native for local builds is outside the scope of this documentation, but well documented [on the main Scala Native site](http://www.scala-native.org/en/latest/user/setup.html).
 
 ## lean containers

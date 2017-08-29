@@ -52,7 +52,7 @@ COPY --from=build \
 
 # Copy in the executable
 COPY --from=build \
-   /root/project-build/dinosaur-build-out /var/www/localhost/cgi-bin/dinosaur-build-out
+   /root/project-build/dinosaur-build-out /var/www/localhost/cgi-bin/app
 
 COPY httpd.conf /etc/apache2/httpd.conf
 COPY mpm.conf /etc/apache2/mpm.conf
