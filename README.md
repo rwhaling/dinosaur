@@ -4,7 +4,7 @@ Web "framework" for Scala Native with the power of [RFC 3875: The Common Gateway
 ## what does it do?
 The CGI protocol is awesomely trivial: no threads, no network, no sockets, just STDIN, STDOUT, and environment variables--which happens to align with the bare-metal power of Scala Native. Dinosaur provides basic utilities for working with these primitives, but it also provides a straightforward Router API that should be familiar to anyone who's worked with Node, Flask, Sinatra, or the like.
 
-But that's not all -- Dinosaur provides a Dockerfile for reproducible, containerized builds of your Scala Native app, as well as a built-in uWSGI web server.
+But that's not all -- Dinosaur provides a Dockerfile for reproducible, containerized builds of your Scala Native app, as well as a built-in Apache httpd web server.
 
 ## example code
 ```scala
@@ -22,27 +22,12 @@ object main {
 ```
 
 ## how do i get it?
-Clone the example project at  [rwhaling/dinosaur-example-project](https://github.com/rwhaling/dinosaur-example-project).  You will need Git and Docker.  Once you have that:
-```sh
-git clone https://github.com/rwhaling/dinosaur-example-project
-cd dinosaur-example-project
-docker build -t dinosaur-project .
-docker run -d -p 8080:8080 dinosaur-project
-<navigate to port 8080 on your docker host>
-```
-
+I'm still working on distributing Dinosaur as a Bintray package. Since that's not stable yet, I would recommend cloning this project and editing main.scala for now.(
+  
 Setting up Scala Native for local builds is outside the scope of this documentation, but well documented [on the main Scala Native site](http://www.scala-native.org/en/latest/user/setup.html).
 
 ## lean containers
-Since the general Dockerfile is all-inclusive, it produces large-ish containers -- generally around 600 MB -- even though our executable is around 3-4 MB.  We can trim the fat by using one container for the build, with a volume mount to catch the output binary, and then use that to build a lean < 20 MB container:
-
-```sh
-docker build -f Dockerfile.build -t dinosaur-build .
-docker run -v $(pwd)/output:/output dinosaur-build
-
-docker build -f Dockerfile.runtime -t tiny-dinosaur .
-docker run -d -p 8080:8080 tiny-dinosaur
-```
+Although Scala Native produces tiny executables, the full SBT/JDK stack can push the size of an all-inclusive docker container up to about 600 MB.  Dinosaur's Dockerfile uses multi-stage builds to separate the process into phases, and only copies binary artifcats into the final container.  Note that this technique requires a recent version of Docker, 17.05 or newer.  
 
 ## TODO
  * Working g8/sbt new integration
@@ -56,7 +41,7 @@ docker run -d -p 8080:8080 tiny-dinosaur
  * HTTP Templating
  * Refined API, study existing Go and Rust models
  * Integrate with other web servers
- * Stress-testing and tuning uWSGI
+ * Stress-testing and tuning Apache
 
 ## project status
 No, seriously, this isn't an elaborate joke. I did this because I love old-school UNIX systems coding, and I did this because I love Scala and am super-stoked about Scala Native.  I've also been thinking a lot about what constitutes "vanilla" Scala style, and about ergonomics for an approachable web micro-framework, all of which inform the design of this project.
