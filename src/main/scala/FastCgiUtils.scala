@@ -44,6 +44,35 @@ object FastCGIUtils {
     RecordHeader(version,rec_type,req_id,length,padding)
   }
 
+  def readParam(byteArray: Ptr[Byte], arr_offset:Long, length:Long): (Ptr[Byte], Ptr[Byte], Long) = {
+    val name_len_offset = arr_offset + 0
+    val (name_len:Long, val_len_offset:Long) = if ((byteArray(name_len_offset) & 0x80) == 0) {
+      val len = byteArray(name_len_offset)
+      (len, arr_offset + 1)
+    } else {
+      val len = ((byteArray(name_len_offset) & 0x7F) << 24) +
+                ((byteArray(name_len_offset + 1) & 0xFF) << 16) +
+                ((byteArray(name_len_offset + 2) & 0xFF) << 8) +
+                (byteArray(name_len_offset + 3) & 0xFF)
+      (len, arr_offset + 4)
+    }
+
+    val (val_len:Long, content_offset:Long) = if ((byteArray(val_len_offset) & 0x80) == 0) {
+      val len = byteArray(val_len_offset)
+      (len, val_len_offset + 1)
+    } else {
+      val len = ((byteArray(val_len_offset) & 0x7F) << 24) +
+                ((byteArray(val_len_offset + 1) & 0xFF) << 16) +
+                ((byteArray(val_len_offset + 2) & 0xFF) << 8) +
+                (byteArray(val_len_offset + 3) & 0xFF)
+      (len, val_len_offset + 4)    
+    }
+    val name = byteArray + content_offset
+    val value = byteArray + content_offset + name_len
+    val next_param_offset = content_offset + name_len + val_len
+    (name, value, next_param_offset)
+  }
+
   def readParams(byteArray: Ptr[Byte], arr_offset:Long, length:Long): Seq[(String,String)] = {
     var offset = arr_offset
     var results:Seq[(String,String)] = Seq()
@@ -85,7 +114,7 @@ object FastCGIUtils {
       // Zone { implicit z =>
       //   val n = fromCString(name)
       //   val v = fromCString(value)
-      //   // System.err.println(s"$name_length $value_length :: $n : $v @ $offset")
+      //   System.err.println(s"$name_length $value_length :: $n : $v @ $offset")
       //   results = results :+ (n,v)
       // }
     }

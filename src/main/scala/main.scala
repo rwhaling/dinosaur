@@ -10,7 +10,7 @@ object main {
             "Hello World!"
           }
           .get("/who")( request =>
-            request.pathInfo match {
+            request.pathInfo() match {
               case Seq("who") => "Who's there?"
               case Seq("who",x) => "Hello, " + x
               case Seq("who",x,y) => "Hello both of you"
@@ -18,7 +18,7 @@ object main {
             }
           )
           .get("/bye")( request =>
-            request.params.getOrElse("who",Seq.empty)
+            request.params("who")
                    .map { x => "Bye, " + x }
                    .mkString(". ")
           )

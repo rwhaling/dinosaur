@@ -15,9 +15,9 @@ case object CONNECT extends Method
 case object PATCH extends Method
 
 case class Request(
-  method: Method,
-  pathInfo: Seq[String],
-  params: Map[String, Seq[String]]
+  method: Function0[Method],
+  pathInfo: Function0[Seq[String]],
+  params: Function1[String, Seq[String]]
 )
 
 case class Response(

@@ -25,7 +25,7 @@ WORKDIR /root/project-build
 # Resolve all our dependencies and plugins to speed up future compilations
 ADD ./project/plugins.sbt project/
 ADD ./project/build.properties project/
-ADD build.sbt .
+ADD build.sbt project/ src/ ./
 RUN sbt update
 
 # Add and compile our actual application source code

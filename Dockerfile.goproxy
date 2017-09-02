@@ -68,4 +68,4 @@ RUN ["go", "build"]
 ENV ROUTER_MODE FCGI
 
 ENTRYPOINT ["bash", "-c"]
-CMD ["socat UNIX-LISTEN:/tmp/app.socket,fork,max-children=48,backlog=4096 EXEC:/dinosaur-build-out > fcgi.log 2> fcgi.error & ./fcgi 0.0.0.0:8080 /tmp/app.socket & tail -f fcgi.log"]
+CMD ["socat UNIX-LISTEN:/tmp/app.socket,fork,max-children=4,backlog=4096 EXEC:/dinosaur-build-out > fcgi.log 2> fcgi.error & ./fcgi 0.0.0.0:8080 /tmp/app.socket & tail -f fcgi.log"]

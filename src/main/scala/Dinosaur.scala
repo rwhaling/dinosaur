@@ -81,8 +81,8 @@ case class CGIRouter(handlers:Seq[Handler]) extends Router {
   def dispatch(): Unit = {
     val request = Router.parseRequest()
     val matches = for ( h @ Handler(method, pattern, handler) <- this.handlers
-                        if request.method == method
-                        if request.pathInfo.startsWith(pattern)) yield h
+                        if request.method() == method
+                        if request.pathInfo().startsWith(pattern)) yield h
     val bestHandler = matches.maxBy( _.pattern.size )
     val response = bestHandler.handler(request)
     for ( (k,v) <- response.inferHeaders ) {
@@ -108,7 +108,7 @@ object Router {
       case "PATCH"  => PATCH
       case _        => GET
     }
-    val request = Request(method, pathInfo, queryString)
+    val request = Request(() => method, () => pathInfo, queryString)
     request
   }
 
