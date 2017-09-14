@@ -8,9 +8,10 @@ object UVFCGIRouter {
   val loop:Loop = uv_default_loop()
   val write_req_size = uv_req_size(3)
   val shutdown_req_size = uv_req_size(4)
+  var closing:PipeHandle = null
 
   def onConnect(server:PipeHandle, status:Int): Unit = {
-    println("connection received!")
+    // println("connection received!")
 
     val client:PipeHandle = stdlib.malloc(pipe_size)
     uv_pipe_init(loop, client, 0)
@@ -18,19 +19,22 @@ object UVFCGIRouter {
     // println(s"uv_accept returned $r")
     uv_read_start(client, onAllocCB, onReadCB)
   }
-
   val onConnectCB = CFunctionPtr.fromFunction2(onConnect)
 
   def onAlloc(pipe:PipeHandle, size:CSize, buffer:Ptr[Buffer]): Unit = {
-    println(s"allocing $size bytes")
+    // println(s"allocing 2048 bytes")
     val buf = stdlib.malloc(2048)
+    if (buf == null) {
+      println("WARNING: malloc failed")
+      sys.exit(1)
+    }
     !buffer._1 = buf
     !buffer._2 = 2048
   }
   val onAllocCB = CFunctionPtr.fromFunction3(onAlloc)
 
   def onRead(pipe:PipeHandle, size:CSSize, buffer:Ptr[Buffer]): Unit = {
-    println(s"reading $size bytes")
+    // println(s"reading $size bytes")
     if (size >= 0) {
       // println(s"reading")
       // stdio.printf(c"read %d bytes: %.*s", size, size, !buffer._1)
@@ -67,14 +71,23 @@ object UVFCGIRouter {
       !buffer._2 = makeResponse(reqId, resp, !write_req)
       uv_write(write_req, pipe, buffer, 1, onWriteCB)
     } else {
-      println("closing connection")
+      // println("stopping reads on client")
       uv_read_stop(pipe)
+      // println(s"mallocing $shutdown_req_size bytes for shutdownReq")
       val shutdownReq = stdlib.malloc(shutdown_req_size).cast[ShutdownReq]
-      // !shutdownReq = pipe
-      uv_shutdown(shutdownReq, pipe, onShutdownCB)
-      // stdlib.free(!buffer._1)
+      !shutdownReq = pipe
+      // println(s"shutting down handle $pipe via request $shutdownReq")
+      // closing = pipe
+      uv_shutdown(shutdownReq, pipe, myShutdownCB)
+      stdlib.free(!buffer._1)
       // uv_close(pipe, onCloseCB)
-      println("uv_close called")
+      // if (uv_is_closing(pipe)) {
+      //   println("pipe already closing")
+      // } else {
+      //   println("about to call close from onRead")
+      //   uv_close(pipe, onCloseCB)
+      // }
+      // println("uv_close called")
     }
     // println("done with read")
   }
@@ -105,25 +118,36 @@ object UVFCGIRouter {
   }
 
   def onWrite(writeReq:WriteReq, status:Int): Unit = {
-    println(s"write got status $status")
-    println("Wrote succesfully")
+    if (status != 0) {
+      println(s"write got status $status")
+    }
+    // println("Wrote succesfully")
     stdio.fflush(stdio.stdout)
     stdlib.free(!writeReq)
   }
   val onWriteCB = CFunctionPtr.fromFunction2(onWrite)
 
-  def onShutdown(shutdownReq:ShutdownReq, status:Int): Unit = {
-    println("shutdown completed")
-    val parsed_shutdownReq = shutdownReq.cast[Ptr[CStruct5[Ptr[Byte],Int,Ptr[Byte],Ptr[Byte],Ptr[Byte]]]]
-    println("about to close")
-    uv_close(!parsed_shutdownReq._5, onCloseCB)
-    println("close called")
+  def myShutdownHandler(shutdownReq:ShutdownReq, status:Int): Unit = {
+    // println(s"shutdown completed with status $status")
+  //   // val parsed_shutdownReq = shutdownReq.cast[Ptr[CStruct5[Ptr[Byte],Int,Ptr[Byte],Ptr[Byte],Ptr[Byte]]]]
+  //   // println("about to close")
+  //   // uv_close(!parsed_shutdownReq._5, onCloseCB)
+  //   // println("close called")
     // uv_close(!shutdownReq, onCloseCB)
+    val pipe:PipeHandle = !shutdownReq
+    if (uv_is_closing(pipe) != 0) {
+      // println("pipe already closing")
+    } else {
+      // println("about to call close from myShutdownHandler")
+      uv_close(pipe, onCloseCB)
+    }
+
   }
-  val onShutdownCB = CFunctionPtr.fromFunction2(onShutdown)
+  val myShutdownCB = CFunctionPtr.fromFunction2(myShutdownHandler)
 
   def onClose(handle:PipeHandle): Unit = {
-    println("connection closed")
+    // println("onClose called")
+    // closing = null
   }
   val onCloseCB = CFunctionPtr.fromFunction1(onClose)
 }
@@ -180,7 +204,8 @@ object LibUV {
   def uv_write(writeReq:WriteReq, client:PipeHandle, bufs: Ptr[Buffer], numBufs: Int, writeCB:WriteCB): Int = extern
   def uv_read_stop(client:PipeHandle): Int = extern
   def uv_shutdown(shutdownReq:ShutdownReq, client:PipeHandle, shutdownCB:ShutdownCB): Int = extern
-  def uv_close(handle:PipeHandle, closeCB: CloseCB) = extern
+  def uv_close(handle:PipeHandle, closeCB: CloseCB): Unit = extern
+  def uv_is_closing(handle:PipeHandle): Int = extern
   def uv_run(loop:Loop, runMode:Int): Int = extern
 }
 

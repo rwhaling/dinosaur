@@ -65,7 +65,7 @@ object FastCGIUtils {
                 ((byteArray(val_len_offset + 1) & 0xFF) << 16) +
                 ((byteArray(val_len_offset + 2) & 0xFF) << 8) +
                 (byteArray(val_len_offset + 3) & 0xFF)
-      (len, val_len_offset + 4)    
+      (len, val_len_offset + 4)
     }
     val name = byteArray + content_offset
     val value = byteArray + content_offset + name_len
@@ -158,7 +158,6 @@ object FastCGIUtils {
       stdio.printf(c"%c%c%c%c%c%c%c%c", 1, 6, req_id_b1, req_id_b0, 0, 0, 0, 0)
       stdio.printf(c"%c%c%c%c%c%c%c%c", 1, 3, req_id_b1, req_id_b0, 0, 8, 0, 0)
       stdio.printf(c"%c%c%c%c%c%c%c%c", 0, 0, 0, 0, 0, 0, 0, 0)
-
     }
     stdio.fflush(stdio.stdout)
   }

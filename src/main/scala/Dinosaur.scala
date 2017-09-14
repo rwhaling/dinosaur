@@ -7,6 +7,7 @@ import io.dinosaur.FastCGIUtils._
 sealed trait RouterMode
 case object CGIMode extends RouterMode
 case object FCGIMode extends RouterMode
+case object UVFCGIMode extends RouterMode
 
 case class Handler(
   method : Method,
@@ -122,6 +123,7 @@ object Router {
 
     val mode = CgiUtils.env(c"ROUTER_MODE") match {
       case "FCGI" => FCGIMode
+      case "UVFCGI"   => UVFCGIMode
       case _      => CGIMode
     }
 
@@ -129,6 +131,7 @@ object Router {
     mode match {
       case CGIMode => CGIRouter(handlers)
       case FCGIMode => FastCGIRouter(handlers)
+      case UVFCGIMode => UVFCGIRouter(handlers)
     }
   }
 }

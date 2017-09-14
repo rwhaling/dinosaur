@@ -12,7 +12,7 @@ type reqResp struct {
 
 type codeContent struct {
 	content []byte
-	code int	
+	code int
 }
 
 func handleReq(fcgi *fcgiclient.FCGIClient, r *http.Request, respChan chan codeContent) {
@@ -37,7 +37,7 @@ func handleReq(fcgi *fcgiclient.FCGIClient, r *http.Request, respChan chan codeC
 	if err != nil {
 			log.Println("err:", err)
 	}
-	
+
 	// log.Println("awaiting binary response from downstream")
 	content, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
@@ -55,7 +55,7 @@ func fcgiWorker(requests chan reqResp) {
 			log.Println("err:", err)
 	}
 
-	defer func() { 
+	defer func() {
 		err := recover()
 		log.Println("Got an error in worker loop, trying to recover", err)
 		fcgiWorker(requests)
@@ -69,7 +69,7 @@ func fcgiWorker(requests chan reqResp) {
 
 func main() {
 	requests := make (chan reqResp)
-	for i := 0; i < 4; i++ {
+	for i := 0; i < 1; i++ {
 		go fcgiWorker(requests)
 	}
 	handler := func (w http.ResponseWriter, r *http.Request) {

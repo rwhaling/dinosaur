@@ -3,7 +3,8 @@ FROM openjdk:8u121-jre-alpine AS build
 # Install C libraries and build tools
 RUN echo "installing dependencies" && \
     apk --update add gc-dev clang musl-dev libc-dev build-base git && \
-    apk add libunwind-dev --update-cache --repository http://nl.alpinelinux.org/alpine/edge/main
+    apk add libunwind-dev --update-cache --repository http://nl.alpinelinux.org/alpine/edge/main && \
+    apk add libuv-dev
 # Install re2 from source for clang++ compatability
 RUN git clone https://github.com/google/re2.git && cd re2 && \
     CXX=clang++ make && make install
@@ -29,7 +30,7 @@ ADD build.sbt .
 RUN sbt update
 
 # Add and compile our actual application source code
-ADD . /root/project-build/
+ADD ./src src/
 RUN sbt clean nativeLink
 
 # Copy the binary executable to a consistent location
@@ -45,6 +46,7 @@ COPY --from=build \
    /usr/lib/libgc.so.1 \
    /usr/lib/libstdc++.so.6 \
    /usr/lib/libgcc_s.so.1 \
+   /usr/lib/libuv.so.1 \
    /usr/lib/
 COPY --from=build \
    /usr/local/lib/libre2.so.0 \
@@ -65,7 +67,8 @@ WORKDIR /go/fcgi
 
 RUN ["go", "build"]
 
-ENV ROUTER_MODE FCGI
+ENV ROUTER_MODE UVFCGI
 
 ENTRYPOINT ["bash", "-c"]
-CMD ["socat UNIX-LISTEN:/tmp/app.socket,fork,max-children=4,backlog=4096 EXEC:/dinosaur-build-out > fcgi.log 2> fcgi.error & ./fcgi 0.0.0.0:8080 /tmp/app.socket & tail -f fcgi.log"]
+# CMD ["socat UNIX-LISTEN:/tmp/app.socket,fork,max-children=4,backlog=4096 EXEC:/dinosaur-build-out > fcgi.log 2> fcgi.error & ./fcgi 0.0.0.0:8080 /tmp/app.socket & tail -f fcgi.log"]
+CMD ["/dinosaur-build-out > fcgi.log 2> fcgi.error & sleep 1 && ./fcgi 0.0.0.0:8080 /tmp/app.socket & tail -f fcgi.log"]
