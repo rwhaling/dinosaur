@@ -122,8 +122,9 @@ object UVFCGIRouter {
       println(s"write got status $status")
     }
     // println("Wrote succesfully")
-    stdio.fflush(stdio.stdout)
+    // stdio.fflush(stdio.stdout)
     stdlib.free(!writeReq)
+    // should it stdlib.free(writeReq) as well?
   }
   val onWriteCB = CFunctionPtr.fromFunction2(onWrite)
 
@@ -168,11 +169,9 @@ case class UVFCGIRouter(handlers:Seq[Handler]) extends Router {
     println(s"uv_pipe_bind returned $r")
     def cbf(pipe:PipeHandle, status:Int):Unit = { () }
     r = uv_listen(pipe, 4096, UVFCGIRouter.onConnectCB)
-
     println(s"uv_listen returned $r")
     r = uv_run(loop, 0)
     println(s"uv_run returned $r")
-
   }
 }
 
