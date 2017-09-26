@@ -5,7 +5,6 @@ import scala.concurrent.Future
 import scala.concurrent.ExecutionContext.Implicits.global
 
 object main {
-
   def main(args: Array[String]): Unit = {
     Router.init()
           .get("/")("<H1>Welcome to Dinosaur!</H1>")
