@@ -1,6 +1,8 @@
 package io.dinosaur.main
 import io.dinosaur._
 import scalanative.native._
+import scala.concurrent.Future
+import scala.concurrent.ExecutionContext.Implicits.global
 
 object main {
   def main(args: Array[String]): Unit = {
@@ -10,7 +12,7 @@ object main {
             "Hello World!"
           }
           .get("/who")( request =>
-            request.pathInfo match {
+            request.pathInfo() match {
               case Seq("who") => "Who's there?"
               case Seq("who",x) => "Hello, " + x
               case Seq("who",x,y) => "Hello both of you"
@@ -18,7 +20,7 @@ object main {
             }
           )
           .get("/bye")( request =>
-            request.params.getOrElse("who",Seq.empty)
+            request.params("who")
                    .map { x => "Bye, " + x }
                    .mkString(". ")
           )

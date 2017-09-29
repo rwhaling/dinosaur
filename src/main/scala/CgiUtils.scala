@@ -15,7 +15,7 @@ object CgiUtils {
     pathInfo.split("/").filter( _ != "" )
   }
 
-  def parseQueryString(queryString: String): Map[String, Seq[String]] = {
+  def parseQueryString(queryString: String): Function1[String, Seq[String]] = {
     val pairs = queryString.split("&").map( pair =>
       pair.split("=") match {
         case Array(key, value) => (key,value)
@@ -24,6 +24,6 @@ object CgiUtils {
     val groupedValues = for ( (k,v) <- pairs;
                                values = v.toSeq.map(_._2) )
                         yield (k -> values)
-    groupedValues.toMap
+    return groupedValues.toMap.getOrElse(_,Seq.empty)
   }
 }

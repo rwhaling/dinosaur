@@ -36,7 +36,7 @@ RUN sbt clean nativeLink
 # Copy the binary executable to a consistent location
 RUN cp ./target/scala-2.11/*-out ./dinosaur-build-out
 
-# Start over from a clean Alpine image
+# Start over from scratch
 FROM alpine:3.3
 
 # Copy in C libraries
@@ -54,14 +54,22 @@ COPY --from=build \
 
 # Copy in the executable
 COPY --from=build \
-   /root/project-build/dinosaur-build-out /var/www/localhost/cgi-bin/dinosaur-build-out
+   /root/project-build/dinosaur-build-out /dinosaur-build-out
 
-COPY httpd.conf /etc/apache2/httpd.conf
-COPY mpm.conf /etc/apache2/mpm.conf
+RUN apk --update add go socat netcat-openbsd bash git vim
+ENV GOROOT /usr/lib/go
+ENV GOPATH /go
+ENV PATH /go/bin:$PATH
+RUN ["go", "get", "github.com/tomasen/fcgi_client"]
 
-RUN apk --update add nginx socat bash
-COPY nginx.conf /etc/nginx/nginx.conf
+ADD ./benchmark/go-fcgi /go/fcgi
+WORKDIR /go/fcgi
 
-ADD nginx.entrypoint.sh /
+RUN ["go", "build"]
 
-ENTRYPOINT ["./nginx.entrypoint.sh"]
+
+ENTRYPOINT ["bash", "-c"]
+# ENV ROUTER_MODE FCGI
+# CMD ["socat UNIX-LISTEN:/tmp/app.socket,fork,max-children=4,backlog=4096 EXEC:/dinosaur-build-out > fcgi.log 2> fcgi.error & ./fcgi 0.0.0.0:8080 /tmp/app.socket & tail -f fcgi.log"]
+ENV ROUTER_MODE UVFCGI
+CMD ["/dinosaur-build-out > fcgi.log 2> fcgi.error & sleep 1 && ./fcgi 0.0.0.0:8080 /tmp/app.socket & tail -f fcgi.log"]
